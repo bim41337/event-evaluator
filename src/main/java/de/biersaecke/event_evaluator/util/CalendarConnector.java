@@ -1,4 +1,4 @@
-package de.biersaecke.event_evaluator;
+package de.biersaecke.event_evaluator.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +20,17 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 
+import de.biersaecke.event_evaluator.MainApp;
+
+/**
+ * Connector class providing access to the Google Calendar object.<br />
+ * Built using the Google Calendar API setup tutorial.<br />
+ * Implements a Singleton-style getter ({@link #getCalenderService()}).
+ */
 public class CalendarConnector {
+
+	private static Calendar calendarInstance;
+	private static Credential credentialInstance;
 
 	/**
 	 * Directory to store user credentials for this application
@@ -57,33 +67,40 @@ public class CalendarConnector {
 	}
 
 	/**
-	 * Creates an authorized Credential object
+	 * Creates an authorized Credential object.<br />
+	 * Implements the lazy singleton pattern privately.
 	 * 
 	 * @return an authorized Credential object
 	 * @throws IOException
 	 */
-	public static Credential authorize() throws IOException {
-		// Load client secrets
-		InputStream in = CalendarConnector.class.getResourceAsStream("resources/client_secret.json");
-		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-		// Build flow and trigger user authorization request
-		GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-				clientSecrets, SCOPES).setDataStoreFactory(DATA_STORE_FACTORY).setAccessType("offline").build();
-		Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
-		// System.out.println("Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
-		return credential;
+	private static Credential getCredentials() throws IOException {
+		if (credentialInstance == null) {
+			// Load client secrets
+			InputStream in = CalendarConnector.class.getResourceAsStream("../resources/client_secret.json");
+			GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+			// Build flow and trigger user authorization request
+			GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+					clientSecrets, SCOPES).setDataStoreFactory(DATA_STORE_FACTORY).setAccessType("offline").build();
+			credentialInstance = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+			// System.out.println("Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
+		}
+		return credentialInstance;
 	}
 
 	/**
-	 * Build and return an authorized Calender client service.
+	 * Build and return an authorized Calender client service.<br />
+	 * Implements the lazy singleton pattern, uses the {@link #getCredentials()} method (also lazy).
 	 * 
 	 * @return an authorized Calender client service
 	 * @throws IOException
 	 */
 	public static Calendar getCalenderService() throws IOException {
-		Credential credential = authorize();
-		return new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
-				.setApplicationName(MainApp.APPLICATION_NAME).build();
+		if (calendarInstance == null) {
+			Credential credential = getCredentials();
+			calendarInstance = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+					.setApplicationName(MainApp.APPLICATION_NAME).build();
+		}
+		return calendarInstance;
 	}
 
 }

@@ -1,8 +1,11 @@
 package de.biersaecke.event_evaluator.model;
 
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 import com.google.api.services.calendar.model.Event;
+
+import de.biersaecke.event_evaluator.util.CalendarConnector;
 
 /**
  * Wrapper class for the Google Calendar Event object.<br />
@@ -43,13 +46,19 @@ public class EvaluatedEvent implements Serializable {
 
 	// Methods
 
-	/*
-	 * Serialization methods
-	 * private void readObject(ObjectInputStream in) throws Exception {
-	 * in.defaultReadObject();
-	 * // TODO: deserialize event object
-	 * }
+	/**
+	 * Standard deserialization method.<br />
+	 * TODO: Remove hard-coded primary calendar ID.
 	 * 
+	 * @param in
+	 * @throws Exception
+	 */
+	private void readObject(ObjectInputStream in) throws Exception {
+		in.defaultReadObject();
+		lazyLoadEvent();
+	}
+
+	/*
 	 * private void writeObject(ObjectOutputStream out) throws Exception {
 	 * out.defaultWriteObject();
 	 * // TODO: serialize event object
@@ -62,6 +71,16 @@ public class EvaluatedEvent implements Serializable {
 	 */
 
 	// Helper methods
+
+	private void lazyLoadEvent() {
+		if (event == null) {
+			try {
+				event = CalendarConnector.getCalenderService().events().get("primary", eventId).execute();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	public Evaluation getEvaluation() {
 		return evaluation;
@@ -78,6 +97,12 @@ public class EvaluatedEvent implements Serializable {
 	protected void setEvent(Event event) {
 		this.event = event;
 		eventId = this.event.getId();
+	}
+
+	@Override
+	public String toString() {
+		lazyLoadEvent();
+		return event.toString() + "\n" + evaluation.toString();
 	}
 
 }

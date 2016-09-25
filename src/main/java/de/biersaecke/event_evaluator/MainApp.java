@@ -16,6 +16,7 @@ import com.google.api.services.calendar.model.Events;
 
 import de.biersaecke.event_evaluator.model.EvaluatedEvent;
 import de.biersaecke.event_evaluator.model.Evaluation;
+import de.biersaecke.event_evaluator.util.CalendarConnector;
 
 public class MainApp {
 
@@ -36,13 +37,12 @@ public class MainApp {
 		List<EvaluatedEvent> valItems = items.stream().map(e -> new EvaluatedEvent(e, Evaluation.SUCCESS))
 				.collect(Collectors.toList());
 		ArrayList<EvaluatedEvent> serializableEventList = new ArrayList<>(valItems);
-		serializableEventList.stream().forEach(event -> System.out.print(event.toString()));
 		List<EvaluatedEvent> deserializedEventList;
 		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(SERILIZATION_TARGET_FILE));
 		out.writeObject(serializableEventList);
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(SERILIZATION_TARGET_FILE));
 		deserializedEventList = (List<EvaluatedEvent>) in.readObject();
-		// deserializedEventList.stream().forEach(event -> System.out.print(event.toString()));
+		deserializedEventList.stream().forEach(event -> System.out.println(event.toString()));
 	}
 
 }

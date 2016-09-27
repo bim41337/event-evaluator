@@ -20,29 +20,31 @@ import de.biersaecke.event_evaluator.util.CalendarConnector;
 
 public class MainApp {
 
+	public static final boolean DEBUG = false;
 	public static final String APPLICATION_NAME = "Event Evaluator";
 	public static final File SERILIZATION_TARGET_FILE = new File(
 			"src/main/java/de/biersaecke/event_evaluator/resources/events.ser");
 
 	public static void main(String[] args) throws Exception {
-
-		// Build a new authorized API client service.
-		// Note: Do not confuse this class with the com.google.api.services.calendar.model.Calendar class.
-		Calendar service = CalendarConnector.getCalenderService();
-		// List the next 10 events from the primary calendar.
-		DateTime now = new DateTime(System.currentTimeMillis());
-		Events events = service.events().list("primary").setMaxResults(10).setTimeMin(now).setOrderBy("startTime")
-				.setSingleEvents(true).execute();
-		List<Event> items = events.getItems();
-		List<EvaluatedEvent> valItems = items.stream().map(e -> new EvaluatedEvent(e, Evaluation.SUCCESS))
-				.collect(Collectors.toList());
-		ArrayList<EvaluatedEvent> serializableEventList = new ArrayList<>(valItems);
-		List<EvaluatedEvent> deserializedEventList;
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(SERILIZATION_TARGET_FILE));
-		out.writeObject(serializableEventList);
-		ObjectInputStream in = new ObjectInputStream(new FileInputStream(SERILIZATION_TARGET_FILE));
-		deserializedEventList = (List<EvaluatedEvent>) in.readObject();
-		deserializedEventList.stream().forEach(event -> System.out.println(event.toString()));
+		if (DEBUG) {
+			// Build a new authorized API client service.
+			// Note: Do not confuse this class with the com.google.api.services.calendar.model.Calendar class.
+			Calendar service = CalendarConnector.getCalenderService();
+			// List the next 10 events from the primary calendar.
+			DateTime now = new DateTime(System.currentTimeMillis());
+			Events events = service.events().list("primary").setMaxResults(10).setTimeMin(now).setOrderBy("startTime")
+					.setSingleEvents(true).execute();
+			List<Event> items = events.getItems();
+			List<EvaluatedEvent> valItems = items.stream().map(e -> new EvaluatedEvent(e, Evaluation.SUCCESS))
+					.collect(Collectors.toList());
+			ArrayList<EvaluatedEvent> serializableEventList = new ArrayList<>(valItems);
+			List<EvaluatedEvent> deserializedEventList;
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(SERILIZATION_TARGET_FILE));
+			out.writeObject(serializableEventList);
+			ObjectInputStream in = new ObjectInputStream(new FileInputStream(SERILIZATION_TARGET_FILE));
+			deserializedEventList = (List<EvaluatedEvent>) in.readObject();
+			deserializedEventList.stream().forEach(event -> System.out.println(event.toString()));
+		}
 	}
 
 }

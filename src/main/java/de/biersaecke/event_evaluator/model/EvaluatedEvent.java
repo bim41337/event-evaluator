@@ -1,6 +1,5 @@
 package de.biersaecke.event_evaluator.model;
 
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 import com.google.api.services.calendar.model.Event;
@@ -10,7 +9,7 @@ import de.biersaecke.event_evaluator.util.CalendarConnector;
 /**
  * Wrapper class for the Google Calendar Event object.<br />
  * Adds EventEvaluator specific fields and helper methods.
- * TODO: An event must support multiple types of evaluations
+ * TODO: An event should be able to support multiple types of evaluations
  */
 public class EvaluatedEvent implements Serializable {
 
@@ -46,41 +45,7 @@ public class EvaluatedEvent implements Serializable {
 
 	// Methods
 
-	/**
-	 * Standard deserialization method.<br />
-	 * TODO: Remove hard-coded primary calendar ID.
-	 * 
-	 * @param in
-	 * @throws Exception
-	 */
-	private void readObject(ObjectInputStream in) throws Exception {
-		in.defaultReadObject();
-		lazyLoadEvent();
-	}
-
-	/*
-	 * private void writeObject(ObjectOutputStream out) throws Exception {
-	 * out.defaultWriteObject();
-	 * // TODO: serialize event object
-	 * }
-	 * 
-	 * @Override
-	 * public String toString() {
-	 * return "EVENT:\n" + getEvent().toString() + "\nEVALUATION: " + getEvaluation().toString() + "\n";
-	 * }
-	 */
-
 	// Helper methods
-
-	private void lazyLoadEvent() {
-		if (event == null) {
-			try {
-				event = CalendarConnector.getCalenderService().events().get("primary", eventId).execute();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
 	public Evaluation getEvaluation() {
 		return evaluation;
@@ -90,7 +55,19 @@ public class EvaluatedEvent implements Serializable {
 		this.evaluation = evaluation;
 	}
 
+	public double getEvaluationPercentage() {
+		return this.evaluation.getPercentage();
+	}
+
 	public Event getEvent() {
+		if (event == null) {
+			try {
+				// TODO: Remove hard-coded primary calendar ID
+				event = CalendarConnector.getCalenderService().events().get("primary", eventId).execute();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		return event;
 	}
 
@@ -101,8 +78,7 @@ public class EvaluatedEvent implements Serializable {
 
 	@Override
 	public String toString() {
-		lazyLoadEvent();
-		return event.toString() + "\n" + evaluation.toString();
+		return getEvent().toString() + "\n" + evaluation.toString();
 	}
 
 }
